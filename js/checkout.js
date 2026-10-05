@@ -88,7 +88,6 @@
           </div>
         </fieldset>
 
-        <p class="form__error" id="form-error" role="alert" hidden></p>
       </form>
 
       <aside class="summary" aria-label="Resumo do pedido">
@@ -102,6 +101,7 @@
           <div class="summary__total"><dt>Total</dt><dd>${money(cart.total)}</dd></div>
         </dl>
         <button type="submit" form="checkout-form" class="btn btn--dark btn--block" id="pay-btn">PAGAR COM MERCADO PAGO</button>
+        <p class="form__error" id="form-error" role="alert" hidden></p>
         <p class="summary__hint">O pagamento (Pix, cartão ou boleto) é feito no site do Mercado Pago. Depois você volta para cá.</p>
       </aside>
     </div>`);
