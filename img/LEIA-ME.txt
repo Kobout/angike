@@ -1,0 +1,8 @@
+Coloque aqui as fotos (JPG, de preferência até 300 KB cada):
+
+banner-1.jpg ... banner-5.jpg       -> carrossel (vertical, ~1080x1350)
+produto-1.jpg ... produto-6.jpg     -> produtos (proporção 3:4, ~900x1200)
+categoria-vestidos.jpg, categoria-conjuntos.jpg, categoria-alfaiataria.jpg (4:3)
+og-image.jpg                         -> imagem ao compartilhar o link (1200x630)
+
+Se uma foto não existir, o site mostra um espaço reservado no lugar.

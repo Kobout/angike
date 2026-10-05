@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ANGIKE — Moda feminina</title>
+  <meta name="description" content="ANGIKE: roupas femininas em linho, algodão e tricô. Entregamos para todo o Brasil.">
+  <link rel="canonical" href="https://angike.com.br/">
+  <meta name="theme-color" content="#FAF9F7">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ANGIKE — Moda feminina">
+  <meta property="og:description" content="Roupas femininas em linho, algodão e tricô. Entregamos para todo o Brasil.">
+  <meta property="og:url" content="https://angike.com.br/">
+  <meta property="og:image" content="https://angike.com.br/img/og-image.jpg">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23FAF9F7'/%3E%3Ctext x='32' y='45' font-family='sans-serif' font-size='40' font-weight='300' text-anchor='middle' fill='%233A2E2A'%3EA%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main id="conteudo">
+    <!-- Carrossel -->
+    <section class="hero" id="hero" aria-roledescription="carrossel" aria-label="Destaques">
+      <div class="hero__slides" id="hero-slides"></div>
+      <div class="hero__brand">
+        <div class="hero__est">EST. <em>The</em> 2026</div>
+        <div class="hero__club">ANGIKE CLUB</div>
+      </div>
+      <div class="hero__dots" id="hero-dots" role="group" aria-label="Escolher slide"></div>
+    </section>
+
+    <!-- Faixa de benefícios -->
+    <div class="strip">
+      <div class="marquee__track marquee__track--slow">
+        <span>ENTREGAMOS PARA TODO O BRASIL.</span>
+        <span>TROCA FÁCIL EM ATÉ [X] DIAS.</span>
+        <span>PAGUE COM PIX OU CARTÃO.</span>
+        <span aria-hidden="true">ENTREGAMOS PARA TODO O BRASIL.</span>
+        <span aria-hidden="true">TROCA FÁCIL EM ATÉ [X] DIAS.</span>
+        <span aria-hidden="true">PAGUE COM PIX OU CARTÃO.</span>
+      </div>
+    </div>
+
+    <!-- Produtos -->
+    <section class="section" id="novidades">
+      <div class="section__head">
+        <h2 class="section__title" id="products-title">Novidades</h2>
+        <a href="index.html#novidades" class="section__link" id="products-clear">VER TUDO</a>
+      </div>
+      <div class="products" id="products"></div>
+      <p class="empty" id="products-empty" hidden>Nenhum produto encontrado. <a href="index.html#novidades">Ver todos</a></p>
+    </section>
+
+    <!-- Categorias -->
+    <section class="section" id="categorias">
+      <h2 class="section__title">Compre por categoria</h2>
+      <div class="categories">
+        <a href="index.html?cat=vestidos#novidades" class="category" style="--tone:#8C7B6E">
+          <img src="img/categoria-vestidos.jpg" alt="" loading="lazy" onerror="this.remove()">
+          <span class="category__name">Vestidos</span>
+          <span class="category__cta">EXPLORAR</span>
+        </a>
+        <a href="index.html?cat=conjuntos#novidades" class="category" style="--tone:#6E6259">
+          <img src="img/categoria-conjuntos.jpg" alt="" loading="lazy" onerror="this.remove()">
+          <span class="category__name">Conjuntos</span>
+          <span class="category__cta">EXPLORAR</span>
+        </a>
+        <a href="index.html?cat=alfaiataria#novidades" class="category" style="--tone:#7D6B60">
+          <img src="img/categoria-alfaiataria.jpg" alt="" loading="lazy" onerror="this.remove()">
+          <span class="category__name">Alfaiataria</span>
+          <span class="category__cta">EXPLORAR</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section class="newsletter">
+      <div class="newsletter__inner">
+        <h2 class="newsletter__title">Entre para o clube</h2>
+        <p>Receba lançamentos, restocks e cupons exclusivos antes de todo mundo.</p>
+        <form class="newsletter__form" id="newsletter-form">
+          <label for="news-email" class="sr-only">Seu e-mail</label>
+          <input id="news-email" type="email" name="email" placeholder="Seu e-mail" required autocomplete="email">
+          <button type="submit" class="btn btn--dark">CADASTRAR</button>
+        </form>
+        <p class="newsletter__msg" id="newsletter-msg" role="status"></p>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/home.js"></script>
+</body>
+</html>
