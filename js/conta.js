@@ -17,6 +17,7 @@
       <div class="notice">
         <strong>Login ainda não configurado.</strong>
         <p>Preencha o Supabase em <code>js/config.js</code> para ativar cadastro, login e histórico de pedidos (passo a passo no README.md).</p>
+        <p class="muted">Motivo: ${esc(window.Angike.notConfiguredReason)}</p>
       </div>`);
   }
 
@@ -26,7 +27,7 @@
     'User already registered': 'Já existe uma conta com esse e-mail. Use "Entrar" ou "Esqueci a senha".',
     'Password should be at least 6 characters.': 'A senha precisa ter pelo menos 6 caracteres.'
   };
-  const authMsg = (err) => AUTH_ERRORS[err.message] || 'Algo deu errado. Confira os dados e tente de novo.';
+  const authMsg = (err) => AUTH_ERRORS[err.message] || (err.message === 'CEP inválido' ? 'O CEP precisa ter 8 números.' : 'Algo deu errado. Confira os dados e tente de novo.');
 
   /* ---------- visitante: entrar / criar conta / esqueci a senha ---------- */
   function renderGuest(tab = 'login', notice = '') {
@@ -190,7 +191,30 @@
             <input id="pf-email" type="email" value="${esc(user.email)}" disabled></div>
           <div class="field"><label for="pf-phone">Celular (com DDD)</label>
             <input id="pf-phone" name="phone" type="tel" autocomplete="tel" maxlength="20" value="${esc(p.phone || '')}"></div>
-          ${p.street ? `<p class="muted">Endereço salvo: ${esc(p.street)}, ${esc(p.number)} — ${esc(p.city)}/${esc(p.state)}. Você pode alterá-lo na próxima compra.</p>` : ''}
+
+          <fieldset class="form__group">
+            <legend class="form__legend">Endereço de entrega</legend>
+            <div class="field field--cep"><label for="pf-cep">CEP</label>
+              <input id="pf-cep" name="cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" value="${esc(p.cep ? p.cep.replace(/^(\d{5})(\d{3})$/, '$1-$2') : '')}">
+              <span class="field__hint" id="pf-cep-hint" role="status"></span></div>
+            <div class="field"><label for="pf-street">Rua</label>
+              <input id="pf-street" name="street" autocomplete="address-line1" maxlength="160" value="${esc(p.street || '')}"></div>
+            <div class="field-row">
+              <div class="field"><label for="pf-number">Número</label>
+                <input id="pf-number" name="number" maxlength="20" value="${esc(p.number || '')}"></div>
+              <div class="field"><label for="pf-complement">Complemento <span class="muted">(opcional)</span></label>
+                <input id="pf-complement" name="complement" autocomplete="address-line2" maxlength="80" value="${esc(p.complement || '')}"></div>
+            </div>
+            <div class="field"><label for="pf-district">Bairro</label>
+              <input id="pf-district" name="district" maxlength="80" value="${esc(p.district || '')}"></div>
+            <div class="field-row">
+              <div class="field"><label for="pf-city">Cidade</label>
+                <input id="pf-city" name="city" autocomplete="address-level2" maxlength="80" value="${esc(p.city || '')}"></div>
+              <div class="field field--uf"><label for="pf-state">UF</label>
+                <input id="pf-state" name="state" autocomplete="address-level1" maxlength="2" value="${esc(p.state || '')}"></div>
+            </div>
+          </fieldset>
+
           <p class="form__error" role="alert" hidden></p>
           <button class="btn btn--dark" type="submit">SALVAR</button>
         </form>
@@ -198,11 +222,41 @@
 
     $('#logout').addEventListener('click', async () => { await sb.auth.signOut(); renderGuest(); });
     bindForm('#profile-form', async (d) => {
-      const { error } = await sb.from('profiles').upsert({ id: user.id, full_name: d.full_name.trim(), phone: (d.phone || '').trim(), updated_at: new Date().toISOString() });
+      const clean = (k) => String(d[k] || '').trim();
+      const cepDigits = clean('cep').replace(/\D/g, '');
+      if (cepDigits && cepDigits.length !== 8) throw new Error('CEP inválido');
+      const { error } = await sb.from('profiles').upsert({
+        id: user.id,
+        full_name: clean('full_name'), phone: clean('phone'),
+        cep: cepDigits, street: clean('street'), number: clean('number'), complement: clean('complement'),
+        district: clean('district'), city: clean('city'), state: clean('state').toUpperCase(),
+        updated_at: new Date().toISOString()
+      });
       if (error) throw error;
       toast('Dados salvos.');
       $('#profile-form button[type="submit"]').disabled = false;
     });
+
+    // CEP: máscara + preenchimento automático (ViaCEP)
+    const cep = $('#pf-cep');
+    cep.addEventListener('input', async () => {
+      const dgt = cep.value.replace(/\D/g, '').slice(0, 8);
+      cep.value = dgt.length > 5 ? dgt.slice(0, 5) + '-' + dgt.slice(5) : dgt;
+      if (dgt.length !== 8) return;
+      const hint = $('#pf-cep-hint');
+      hint.textContent = 'Buscando endereço…';
+      try {
+        const j = await (await fetch(`https://viacep.com.br/ws/${dgt}/json/`)).json();
+        if (j.erro) { hint.textContent = 'CEP não encontrado. Preencha manualmente.'; return; }
+        $('#pf-street').value = j.logradouro || $('#pf-street').value;
+        $('#pf-district').value = j.bairro || $('#pf-district').value;
+        $('#pf-city').value = j.localidade || $('#pf-city').value;
+        $('#pf-state').value = j.uf || $('#pf-state').value;
+        hint.textContent = '';
+        $('#pf-number').focus();
+      } catch { hint.textContent = 'Não foi possível buscar o CEP. Preencha manualmente.'; }
+    });
+    $('#pf-state').addEventListener('input', (e) => (e.target.value = e.target.value.replace(/[^a-z]/gi, '').toUpperCase()));
   }
 
   /* ---------- início ---------- */

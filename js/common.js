@@ -21,6 +21,12 @@
 
   /* ---------- Supabase ---------- */
   const configured = Boolean(CFG.SUPABASE_URL && CFG.SUPABASE_KEY && window.supabase);
+  // explica por que o login não está ativo (aparece nos avisos das páginas)
+  const notConfiguredReason = configured ? '' :
+    !window.ANGIKE_CONFIG ? 'O arquivo js/config.js não carregou ou tem erro de digitação (aspas, vírgulas).' :
+    !(CFG.SUPABASE_URL && CFG.SUPABASE_KEY) ? 'SUPABASE_URL ou SUPABASE_KEY estão vazios no js/config.js publicado.' :
+    'A biblioteca do Supabase (cdn.jsdelivr.net) não carregou. Algum bloqueador de anúncios ou extensão pode estar impedindo.';
+  if (!configured) console.warn('[ANGIKE] Modo demonstração:', notConfiguredReason);
   const sb = configured ? window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_KEY) : null;
 
   async function getUser() {
@@ -305,7 +311,7 @@
 
   window.Angike = {
     CFG, $, $$, esc, money, brl, param, storage, toast,
-    sb, configured, getUser, requireUser,
+    sb, configured, notConfiguredReason, getUser, requireUser,
     getProducts, getProduct, productCard, mediaHTML, tone,
     Cart, shippingFor, statusPill, ORDER_STATUS
   };

@@ -18,6 +18,7 @@
     return done(`<div class="notice">
       <strong>Pagamento ainda não configurado.</strong>
       <p>Preencha o Supabase em <code>js/config.js</code> e publique as funções do Mercado Pago (passo a passo no README.md).</p>
+        <p class="muted">Motivo: ${esc(window.Angike.notConfiguredReason)}</p>
       <a class="btn btn--outline" href="carrinho.html">VOLTAR PARA A SACOLA</a>
     </div>`);
   }
