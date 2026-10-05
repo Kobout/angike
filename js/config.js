@@ -6,8 +6,8 @@
    ========================================================= */
 window.ANGIKE_CONFIG = {
   // Supabase → Project Settings → API (ou "Connect")
-  SUPABASE_URL: '',          // ex.: 'https://abcdefghijk.supabase.co'
-  SUPABASE_KEY: '',          // a chave pública: "anon" ou "publishable" (NUNCA a service_role)
+  SUPABASE_URL: 'https://rdwekdijijofqaxkmwmi.supabase.co',
+  SUPABASE_KEY: 'sb_publishable_mKthUPMvCqVbFcNn1bkAZA_n7ILHwkd',
 
   // Frete — precisa ser IGUAL aos secrets SHIPPING_CENTS e FREE_SHIPPING_MIN_CENTS da função
   SHIPPING_CENTS: 2500,            // R$ 25,00
