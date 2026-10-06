@@ -2,11 +2,11 @@
    ANGIKE — sacola: alterar quantidade, remover, resumo com frete
    ========================================================= */
 (function () {
-  const { $, $$, esc, money, brl, CFG, Cart, mediaHTML, tone } = window.Angike;
+  const { $, $$, esc, money, brl, Cart, mediaHTML, tone, missingForFreeShipping } = window.Angike;
   const root = $('#cart');
 
   async function render() {
-    const { lines, subtotal, shipping, total } = await Cart.detailed();
+    const { lines, subtotal } = await Cart.detailed();
     root.removeAttribute('aria-busy');
 
     if (!lines.length) {
@@ -18,10 +18,10 @@
       return;
     }
 
-    const missing = CFG.FREE_SHIPPING_MIN_CENTS - subtotal;
-    const freeMsg = shipping > 0 && missing > 0
-      ? `<p class="summary__hint">Faltam <strong>${brl.format(missing / 100)}</strong> para o frete grátis.</p>`
-      : (subtotal > 0 ? '<p class="summary__hint">Você ganhou frete grátis.</p>' : '');
+    const missing = missingForFreeShipping(subtotal);
+    const freeMsg = missing === null ? ''
+      : missing > 0 ? `<p class="summary__hint">Faltam <strong>${brl.format(missing / 100)}</strong> para o frete grátis.</p>`
+      : '<p class="summary__hint">Você ganhou frete grátis (opção mais econômica).</p>';
 
     root.innerHTML = `
       <div class="cart-layout">
@@ -52,8 +52,7 @@
           <h2 class="summary__title">Resumo</h2>
           <dl class="summary__rows">
             <div><dt>Subtotal</dt><dd>${money(subtotal)}</dd></div>
-            <div><dt>Frete</dt><dd>${shipping > 0 ? money(shipping) : 'Grátis'}</dd></div>
-            <div class="summary__total"><dt>Total</dt><dd>${money(total)}</dd></div>
+            <div><dt>Frete</dt><dd>Calculado no checkout</dd></div>
           </dl>
           ${freeMsg}
           <a class="btn btn--dark btn--block" href="checkout.html">FINALIZAR COMPRA</a>

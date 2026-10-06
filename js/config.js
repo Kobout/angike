@@ -9,8 +9,9 @@ window.ANGIKE_CONFIG = {
   SUPABASE_URL: 'https://rdwekdijijofqaxkmwmi.supabase.co',
   SUPABASE_KEY: 'sb_publishable_mKthUPMvCqVbFcNn1bkAZA_n7ILHwkd',
 
-  // Frete — precisa ser IGUAL aos secrets SHIPPING_CENTS e FREE_SHIPPING_MIN_CENTS da função
-  SHIPPING_CENTS: 2500,            // R$ 25,00
+  // Frete grátis (opção mais barata) a partir deste valor, em centavos.
+  // 0 = sempre grátis | null = nunca. Precisa ser IGUAL ao secret FREE_SHIPPING_MIN_CENTS.
+  // (o valor do frete em si vem da SuperFrete)
   FREE_SHIPPING_MIN_CENTS: 30000,  // frete grátis a partir de R$ 300,00
 
   // Contato (aparece no rodapé)

@@ -6,19 +6,17 @@
 // Secrets necessários (Supabase → Edge Functions → Secrets):
 //   MP_ACCESS_TOKEN          token do Mercado Pago (TEST-... para testes, APP_USR-... para produção)
 //   SITE_URL                 https://angike.com.br
-//   SHIPPING_CENTS           2500   (opcional; precisa bater com js/config.js)
-//   FREE_SHIPPING_MIN_CENTS  30000  (opcional; precisa bater com js/config.js)
+//   + os secrets de frete da SuperFrete (veja _shared/frete.ts)
 // SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY já existem automaticamente.
 // Publique com "Verify JWT" DESLIGADO — o login é conferido aqui dentro.
 // =========================================================
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { loadLines, quote, UserError, validateItems } from '../_shared/frete.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const MP_TOKEN = Deno.env.get('MP_ACCESS_TOKEN') ?? '';
 const SITE_URL = (Deno.env.get('SITE_URL') ?? 'https://angike.com.br').replace(/\/+$/, '');
-const SHIPPING_CENTS = Number(Deno.env.get('SHIPPING_CENTS') ?? 2500);
-const FREE_SHIPPING_MIN_CENTS = Number(Deno.env.get('FREE_SHIPPING_MIN_CENTS') ?? 30000);
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -28,7 +26,6 @@ const cors = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
-type CartItem = { id: string; size?: string; qty: number };
 const ADDRESS_FIELDS = ['full_name', 'phone', 'cep', 'street', 'number', 'complement', 'district', 'city', 'state'] as const;
 const REQUIRED = ['full_name', 'phone', 'cep', 'street', 'number', 'district', 'city', 'state'];
 
@@ -47,13 +44,8 @@ Deno.serve(async (req) => {
 
     // 2) valida o que veio do navegador
     const body = await req.json().catch(() => ({}));
-    const items: CartItem[] = Array.isArray(body.items) ? body.items : [];
-    if (!items.length || items.length > 30) return json({ error: 'Sua sacola está vazia.' }, 400);
-    for (const i of items) {
-      if (typeof i?.id !== 'string' || !Number.isInteger(i.qty) || i.qty < 1 || i.qty > 10) {
-        return json({ error: 'Sacola inválida. Atualize a página e tente de novo.' }, 400);
-      }
-    }
+    const items = validateItems(body.items);
+    if (!items) return json({ error: 'Sacola inválida. Atualize a página e tente de novo.' }, 400);
 
     const raw = body.address ?? {};
     const address: Record<string, string> = {};
@@ -64,24 +56,14 @@ Deno.serve(async (req) => {
       return json({ error: 'Confira o endereço de entrega.' }, 400);
     }
 
-    // 3) preços SEMPRE do banco
-    const ids = [...new Set(items.map((i) => i.id))];
-    const { data: products, error: prodErr } = await admin
-      .from('products').select('id, name, price_cents, sizes, active').in('id', ids);
-    if (prodErr) throw prodErr;
-
-    const lines = [];
-    for (const i of items) {
-      const p = products?.find((x) => x.id === i.id);
-      if (!p || !p.active) return json({ error: 'Um produto da sua sacola não está mais disponível.' }, 409);
-      const size = String(i.size ?? '');
-      if (p.sizes?.length && !p.sizes.includes(size)) return json({ error: `Escolha um tamanho válido para ${p.name}.` }, 400);
-      lines.push({ product_id: p.id, name: p.name, size, unit_price_cents: p.price_cents, quantity: i.qty });
-    }
-
-    const subtotal = lines.reduce((n, l) => n + l.unit_price_cents * l.quantity, 0);
-    const shipping = subtotal >= FREE_SHIPPING_MIN_CENTS ? 0 : SHIPPING_CENTS;
+    // 3) preços e frete SEMPRE recalculados aqui (banco + SuperFrete)
+    const { lines: rawLines, subtotal } = await loadLines(admin, items);
+    const options = await quote(address.cep, rawLines, subtotal);
+    const chosen = options.find((o) => o.id === String(body.shipping_service ?? ''));
+    if (!chosen) return json({ error: 'Escolha a forma de entrega de novo (o frete foi recalculado).' }, 409);
+    const shipping = chosen.price_cents;
     const total = subtotal + shipping;
+    const lines = rawLines.map(({ dims: _dims, ...l }) => l);
 
     // 4) grava o pedido
     const { data: order, error: orderErr } = await admin.from('orders').insert({
@@ -91,6 +73,7 @@ Deno.serve(async (req) => {
       shipping_cents: shipping,
       total_cents: total,
       shipping_address: address,
+      shipping_method: chosen.company ? `${chosen.name} (${chosen.company})` : chosen.name,
       customer_email: user.email,
     }).select('id').single();
     if (orderErr) throw orderErr;
@@ -110,9 +93,11 @@ Deno.serve(async (req) => {
           unit_price: l.unit_price_cents / 100,
           currency_id: 'BRL',
         })),
-        ...(shipping > 0 ? [{ id: 'frete', title: 'Frete', quantity: 1, unit_price: shipping / 100, currency_id: 'BRL' }] : []),
+        ...(shipping > 0 ? [{ id: 'frete', title: `Frete — ${chosen.name}`, quantity: 1, unit_price: shipping / 100, currency_id: 'BRL' }] : []),
       ],
-      payer: { email: user.email, name: firstName, surname: rest.join(' ') },
+      // e-mail do comprador NÃO é enviado: em modo de teste, um e-mail real aqui causa
+      // o erro "uma das partes é de teste". O Mercado Pago pede o e-mail na própria tela.
+      payer: { name: firstName, surname: rest.join(' ') },
       external_reference: order.id,
       back_urls: { success: back, pending: back, failure: back },
       auto_return: 'approved',
@@ -141,6 +126,7 @@ Deno.serve(async (req) => {
     const isTest = MP_TOKEN.startsWith('TEST-');
     return json({ order_id: order.id, init_point: (isTest && pref.sandbox_init_point) || pref.init_point });
   } catch (err) {
+    if (err instanceof UserError) return json({ error: err.message }, err.status);
     console.error(err);
     return json({ error: 'Não foi possível iniciar o pagamento. Tente novamente.' }, 500);
   }

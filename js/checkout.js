@@ -88,6 +88,12 @@
           </div>
         </fieldset>
 
+        <fieldset class="form__group">
+          <legend class="form__legend">Forma de entrega</legend>
+          <div id="shipping-options" class="ship-options" role="radiogroup" aria-label="Forma de entrega">
+            <p class="muted">Informe o CEP para ver as opções de entrega.</p>
+          </div>
+        </fieldset>
       </form>
 
       <aside class="summary" aria-label="Resumo do pedido">
@@ -97,8 +103,8 @@
         </ul>
         <dl class="summary__rows">
           <div><dt>Subtotal</dt><dd>${money(cart.subtotal)}</dd></div>
-          <div><dt>Frete</dt><dd>${cart.shipping > 0 ? money(cart.shipping) : 'Grátis'}</dd></div>
-          <div class="summary__total"><dt>Total</dt><dd>${money(cart.total)}</dd></div>
+          <div><dt>Frete</dt><dd id="sum-shipping">—</dd></div>
+          <div class="summary__total"><dt>Total</dt><dd id="sum-total">${money(cart.subtotal)}</dd></div>
         </dl>
         <button type="submit" form="checkout-form" class="btn btn--dark btn--block" id="pay-btn">PAGAR COM MERCADO PAGO</button>
         <p class="form__error" id="form-error" role="alert" hidden></p>
@@ -114,9 +120,55 @@
   cep.addEventListener('input', () => {
     const d = cep.value.replace(/\D/g, '').slice(0, 8);
     cep.value = d.length > 5 ? d.slice(0, 5) + '-' + d.slice(5) : d;
-    if (d.length === 8) lookupCep(d);
+    if (d.length === 8) { lookupCep(d); quoteShipping(d); }
   });
   $('#state').addEventListener('input', (e) => (e.target.value = e.target.value.replace(/[^a-z]/gi, '').toUpperCase()));
+
+  /* ---------- frete (SuperFrete, via função shipping-quote) ---------- */
+  let shipOptions = [];
+  let shipChosen = null;
+  let quotedCep = '';
+  const shipBox = $('#shipping-options');
+
+  function updateTotals() {
+    const opt = shipOptions.find((o) => o.id === shipChosen);
+    $('#sum-shipping').textContent = opt ? (opt.price_cents > 0 ? money(opt.price_cents) : 'Grátis') : '—';
+    $('#sum-total').textContent = money(cart.subtotal + (opt ? opt.price_cents : 0));
+  }
+
+  async function quoteShipping(cepDigits) {
+    if (cepDigits === quotedCep) return;
+    quotedCep = cepDigits;
+    shipOptions = []; shipChosen = null; updateTotals();
+    shipBox.innerHTML = '<p class="muted">Calculando frete…</p>';
+    try {
+      const { data, error } = await sb.functions.invoke('shipping-quote', { body: { cep: cepDigits, items: Cart.items() } });
+      if (error) {
+        let msg = 'Não foi possível calcular o frete. Confira o CEP e tente de novo.';
+        try { const j = await error.context.json(); if (j.error) msg = j.error; } catch { /* sem corpo */ }
+        throw new Error(msg);
+      }
+      if (cepDigits !== quotedCep) return; // o CEP mudou enquanto calculava
+      shipOptions = data.options || [];
+      if (!shipOptions.length) throw new Error('Nenhuma forma de entrega disponível para esse CEP.');
+      shipChosen = shipOptions[0].id; // a mais barata vem primeiro
+      shipBox.innerHTML = shipOptions.map((o) => `
+        <label class="ship-option">
+          <input type="radio" name="shipping_service" value="${esc(o.id)}" ${o.id === shipChosen ? 'checked' : ''}>
+          <span class="ship-option__body">
+            <span class="ship-option__name">${esc(o.name)}${o.company ? ` <span class="muted">· ${esc(o.company)}</span>` : ''}</span>
+            <span class="muted">${o.days ? `Chega em até ${o.days} dia${o.days > 1 ? 's' : ''} úte${o.days > 1 ? 'is' : 'il'} após o envio` : 'Prazo informado no envio'}</span>
+          </span>
+          <span class="ship-option__price">${o.price_cents > 0 ? money(o.price_cents) : '<strong>Grátis</strong>'}</span>
+        </label>`).join('');
+      shipBox.querySelectorAll('input[name="shipping_service"]').forEach((r) =>
+        r.addEventListener('change', () => { shipChosen = r.value; updateTotals(); }));
+      updateTotals();
+    } catch (err) {
+      quotedCep = '';
+      shipBox.innerHTML = `<p class="form__error">${esc(err.message)}</p>`;
+    }
+  }
 
   // preenche endereço pelo CEP (ViaCEP, gratuito)
   async function lookupCep(d) {
@@ -151,6 +203,11 @@
     const cepDigits = cep.value.replace(/\D/g, '');
     if (cepDigits.length !== 8) { cep.setAttribute('aria-invalid', 'true'); firstInvalid = firstInvalid || cep; }
     if ($('#phone').value.replace(/\D/g, '').length < 10) { $('#phone').setAttribute('aria-invalid', 'true'); firstInvalid = firstInvalid || $('#phone'); }
+    if (!firstInvalid && !shipChosen) {
+      errBox.textContent = 'Escolha a forma de entrega (informe o CEP para calcular).';
+      errBox.hidden = false;
+      return;
+    }
     if (firstInvalid) {
       errBox.textContent = 'Confira os campos destacados.';
       errBox.hidden = false;
@@ -159,6 +216,7 @@
     }
 
     const data = Object.fromEntries(new FormData(form).entries());
+    delete data.shipping_service;
     Object.keys(data).forEach((k) => (data[k] = String(data[k]).trim()));
     data.cep = cepDigits;
 
@@ -171,7 +229,7 @@
       await sb.from('profiles').upsert({ id: user.id, ...data, updated_at: new Date().toISOString() });
 
       const { data: res, error } = await sb.functions.invoke('create-checkout', {
-        body: { items: Cart.items(), address: data }
+        body: { items: Cart.items(), address: data, shipping_service: shipChosen }
       });
       if (error) {
         let msg = 'Não foi possível iniciar o pagamento. Tente novamente.';
@@ -187,4 +245,8 @@
       btn.textContent = 'PAGAR COM MERCADO PAGO';
     }
   });
+
+  // CEP já salvo no perfil: calcula o frete ao abrir a página
+  const savedCep = cep.value.replace(/\D/g, '');
+  if (savedCep.length === 8) quoteShipping(savedCep);
 })();

@@ -31,7 +31,7 @@
   async function load() {
     const { data: o, error } = await sb
       .from('orders')
-      .select('id, status, subtotal_cents, shipping_cents, total_cents, shipping_address, created_at, order_items(name, size, quantity, unit_price_cents)')
+      .select('id, status, subtotal_cents, shipping_cents, total_cents, shipping_address, shipping_method, created_at, order_items(name, size, quantity, unit_price_cents)')
       .eq('id', id)
       .maybeSingle();
 
@@ -62,7 +62,7 @@
         </ul>
         <dl class="summary__rows">
           <div><dt>Subtotal</dt><dd>${money(o.subtotal_cents)}</dd></div>
-          <div><dt>Frete</dt><dd>${o.shipping_cents > 0 ? money(o.shipping_cents) : 'Grátis'}</dd></div>
+          <div><dt>Frete${o.shipping_method ? ` (${esc(o.shipping_method)})` : ''}</dt><dd>${o.shipping_cents > 0 ? money(o.shipping_cents) : 'Grátis'}</dd></div>
           <div class="summary__total"><dt>Total</dt><dd>${money(o.total_cents)}</dd></div>
         </dl>
       </section>

@@ -125,14 +125,19 @@
         return product ? { ...i, product, lineCents: product.price_cents * i.qty } : null;
       }).filter(Boolean);
       const subtotal = lines.reduce((n, l) => n + l.lineCents, 0);
-      const shipping = shippingFor(subtotal);
-      return { lines, subtotal, shipping, total: subtotal + shipping };
+      return { lines, subtotal };
     }
   };
 
-  function shippingFor(subtotal) {
-    if (subtotal <= 0) return 0;
-    return subtotal >= (CFG.FREE_SHIPPING_MIN_CENTS || Infinity) ? 0 : (CFG.SHIPPING_CENTS || 0);
+  /** Frete grátis a partir de quanto (centavos). 0 = sempre grátis; vazio/null = nunca. */
+  function freeShippingMin() {
+    const v = CFG.FREE_SHIPPING_MIN_CENTS;
+    return (typeof v === 'number' && v >= 0) ? v : null;
+  }
+  /** Quanto falta para o frete grátis (0 = já ganhou; null = não há frete grátis). */
+  function missingForFreeShipping(subtotal) {
+    const min = freeShippingMin();
+    return min === null ? null : Math.max(0, min - subtotal);
   }
 
   function updateBadge() {
@@ -188,8 +193,11 @@
   ];
 
   function renderLayout() {
-    const freeMin = CFG.FREE_SHIPPING_MIN_CENTS ? brl.format(CFG.FREE_SHIPPING_MIN_CENTS / 100) : 'R$ [VALOR]';
-    const notices = [`FRETE GRÁTIS ACIMA DE ${freeMin}.`, 'PAGUE COM PIX OU CARTÃO.', 'ENTREGAMOS PARA TODO O BRASIL.'];
+    const freeMin = freeShippingMin();
+    const notices = [
+      ...(freeMin === null ? [] : [freeMin === 0 ? 'FRETE GRÁTIS PARA TODO O BRASIL.' : `FRETE GRÁTIS ACIMA DE ${brl.format(freeMin / 100)}.`]),
+      'PAGUE COM PIX OU CARTÃO.', 'ENTREGAMOS PARA TODO O BRASIL.'
+    ];
     const track = notices.map((t) => `<span>${t}</span>`).join('') + notices.map((t) => `<span aria-hidden="true">${t}</span>`).join('');
 
     let closed = false;
@@ -313,7 +321,7 @@
     CFG, $, $$, esc, money, brl, param, storage, toast,
     sb, configured, notConfiguredReason, getUser, requireUser,
     getProducts, getProduct, productCard, mediaHTML, tone,
-    Cart, shippingFor, statusPill, ORDER_STATUS
+    Cart, freeShippingMin, missingForFreeShipping, statusPill, ORDER_STATUS
   };
 
   renderLayout();
