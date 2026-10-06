@@ -6,11 +6,11 @@
 
   /* ---------- carrossel ---------- */
   const SLIDES = [
-    { tone: '#7A6A5E', img: 'img/banner-1.jpg', script: 'the new drop:',   title: 'COLEÇÃO PRIMAVERA.', text: 'PEÇAS LEVES EM LINHO E ALGODÃO, FEITAS PARA OS DIAS QUENTES.', link: '#novidades' },
-    { tone: '#6E6259', img: 'img/banner-2.jpg', script: 'everyday basics:', title: 'ESSENCIAIS.',        text: 'AS PEÇAS QUE COMBINAM COM TUDO, EM CORES NEUTRAS.',          link: '#novidades' },
-    { tone: '#7D6B60', img: 'img/banner-3.jpg', script: 'back in stock:',   title: 'RESTOCK.',           text: 'OS FAVORITOS QUE ESGOTARAM ESTÃO DE VOLTA.',                  link: '#novidades' },
-    { tone: '#85725F', img: 'img/banner-4.jpg', script: 'the new charm:',   title: 'BRINDE EXCLUSIVO.',  text: 'BRINDE DISPONÍVEL PARA COMPRAS ACIMA DE R$ [VALOR]*',         link: '#novidades' },
-    { tone: '#5F5852', img: 'img/banner-5.jpg', script: 'last call:',       title: 'SALE ATÉ [X]% OFF.', text: 'PEÇAS SELECIONADAS POR TEMPO LIMITADO.',                      link: '#novidades' }
+    { tone: '#6B1E2E', img: 'img/banner-1.jpg', script: 'the new drop:',   title: 'COLEÇÃO PRIMAVERA.', text: 'PEÇAS LEVES EM LINHO E ALGODÃO, FEITAS PARA OS DIAS QUENTES.', link: '#novidades' },
+    { tone: '#5A1A27', img: 'img/banner-2.jpg', script: 'everyday basics:', title: 'ESSENCIAIS.',        text: 'AS PEÇAS QUE COMBINAM COM TUDO, EM CORES NEUTRAS.',          link: '#novidades' },
+    { tone: '#7A2433', img: 'img/banner-3.jpg', script: 'back in stock:',   title: 'RESTOCK.',           text: 'OS FAVORITOS QUE ESGOTARAM ESTÃO DE VOLTA.',                  link: '#novidades' },
+    { tone: '#6E1F30', img: 'img/banner-4.jpg', script: 'the new charm:',   title: 'BRINDE EXCLUSIVO.',  text: 'BRINDE DISPONÍVEL PARA COMPRAS ACIMA DE R$ [VALOR]*',         link: '#novidades' },
+    { tone: '#4F1622', img: 'img/banner-5.jpg', script: 'last call:',       title: 'SALE ATÉ [X]% OFF.', text: 'PEÇAS SELECIONADAS POR TEMPO LIMITADO.',                      link: '#novidades' }
   ];
   const AUTOPLAY_MS = 5000;
 

@@ -7,14 +7,14 @@
   --surface: #FAF9F7;
   --strip: #ECE9E5;
   --soft: #E6E1DB;
-  --text: #3A2E2A;
-  --text-strong: #1F1714;
+  --text: #3B1A20;
+  --text-strong: #24090F;
   --muted: #5E5550;
   --muted-2: #6B605A;
   --line: #5E5550;
   --line-soft: #D6D0CA;
-  --accent: #8C735F;
-  --footer: #2E2522;
+  --accent: #7A2433;
+  --footer: #3A1219;
   --footer-text: #E6E1DB;
   --footer-muted: #C9C0B8;
 
@@ -128,7 +128,7 @@ button { font-family: inherit; }
 /* ---------- Hero / carrossel ---------- */
 .hero {
   position: relative; height: 620px; overflow: hidden;
-  color: #fff; background: #7A6A5E;
+  color: #fff; background: #6B1E2E;
 }
 @media (min-width: 900px) { .hero { height: 680px; } }
 
@@ -562,3 +562,21 @@ a.media { text-decoration: none; }
 .ship-option__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .ship-option__name { font-size: 15px; font-weight: 400; }
 .ship-option__price { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ---------- painel admin ---------- */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 20px 0 28px; }
+.kpi { background: var(--surface); border: 1px solid var(--line-soft); padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; }
+.kpi--alert { border-color: var(--warn); background: var(--warn-bg); }
+.kpi__label { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.kpi__value { font-size: 26px; font-variant-numeric: tabular-nums; }
+.tabs--scroll { overflow-x: auto; }
+.tabs--scroll .tabs__tab { flex: 0 0 auto; padding: 0 16px; white-space: nowrap; }
+.admin-orders { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.admin-order { background: var(--surface); border: 1px solid var(--line-soft); padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+.admin-order__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.admin-order__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.admin-order__grid p { margin: 4px 0 0; }
+.admin-items { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 15px; }
+.admin-address { margin: 6px 0 0; font-family: inherit; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+.admin-ship { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; border-top: 1px solid var(--line-soft); padding-top: 14px; }
+.admin-ship input { flex: 1 1 220px; height: 48px; padding: 0 14px; border: 1px solid #B8B0A9; background: #fff; font-family: inherit; font-size: 15px; text-transform: uppercase; }
