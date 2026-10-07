@@ -35,6 +35,19 @@
     return data.session ? data.session.user : null;
   }
 
+  /** A conta logada é administradora? (tabela admins no Supabase; o banco é quem garante) */
+  let adminPromise = null;
+  function isAdmin() {
+    if (!adminPromise) {
+      adminPromise = (async () => {
+        if (!sb || !(await getUser())) return false;
+        const { data, error } = await sb.rpc('is_admin');
+        return !error && data === true;
+      })();
+    }
+    return adminPromise;
+  }
+
   /** Exige login: manda para conta.html e volta para a página atual depois. */
   async function requireUser() {
     const user = await getUser();
@@ -319,7 +332,7 @@
 
   window.Angike = {
     CFG, $, $$, esc, money, brl, param, storage, toast,
-    sb, configured, notConfiguredReason, getUser, requireUser,
+    sb, configured, notConfiguredReason, getUser, isAdmin, requireUser,
     getProducts, getProduct, productCard, mediaHTML, tone,
     Cart, freeShippingMin, missingForFreeShipping, statusPill, ORDER_STATUS
   };
